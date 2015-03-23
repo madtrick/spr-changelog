@@ -2,7 +2,6 @@
 
 var fs             = require('fs');
 var path           = require('path');
-var flatten        = require('lodash.flatten');
 var find           = require('lodash.find');
 var keepachangelog = require('keepachangelog');
 var Promise        = require('bluebird');
@@ -27,15 +26,28 @@ module.exports = {
         keepachangelog.read(changelogPath)
         .then( function (changelog) {
 
-          var upcomingChanges = changelog.releases.filter( function (release) {
+          var changedAsMDList,
+              additionsAsMDList,
+              removalsAsMDList,
+              upcoming;
+
+          upcoming = changelog.releases.filter( function (release) {
             return release.version === 'upcoming';
           })[0];
 
-          var changes = flatten(upcomingChanges.Changed);
+          changedAsMDList   = markdownListify(upcoming.Changed);
+          additionsAsMDList = markdownListify(upcoming.Added);
+          removalsAsMDList  = markdownListify(upcoming.Removed);
 
-          console.log(changes);
-          changelogSummary = changes.join('\n');
-          console.log(changelogSummary);
+          changelogSummary = [
+            'Summary on changes included in this pull request',
+            '#### Changed',
+            changedAsMDList,
+            '#### Added',
+            additionsAsMDList,
+            '#### Removed',
+            removalsAsMDList
+          ].join('\n');
 
           resolve(changelogSummary);
         });
@@ -46,3 +58,40 @@ module.exports = {
     });
   }
 };
+
+function markdownListify(elements) {
+  return elements.map( function (el) {
+    var markdownElement = el.map(transformJsonMLIntoMarkdownString).join('');
+    return '- ' + markdownElement + '\n';
+  }).join('');
+}
+
+function transformJsonMLIntoMarkdownString (el) {
+  if (typeof el === 'string') {
+    return el;
+  }
+
+  var tagName = el.shift();
+
+  if (tagName === 'inlinecode') {
+    return buildAndSurroundElementList('`', el);
+  } else if (tagName === 'em') {
+    return buildAndSurroundElementList('*', el);
+  } else {
+    throw new Error('Unknown tag ' + tagName);
+  }
+}
+
+function buildAndSurroundElementList (marker, els) {
+  return marker + buildElementList(els) + marker;
+}
+
+function buildElementList (md, sep) {
+  sep = sep || '';
+
+  if (md) {
+    return md.map(transformJsonMLIntoMarkdownString).join(sep);
+  } else {
+    return '';
+  }
+}
