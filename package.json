@@ -1,0 +1,17 @@
+{
+  "name": "spr-changelog",
+  "version": "0.0.0",
+  "description": "Include changelog info in the pull request message",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Farruco Sanjurjo",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^2.9.14",
+    "keepachangelog": "^0.2.1",
+    "lodash.find": "^3.0.0",
+    "lodash.flatten": "^3.0.1"
+  }
+}
