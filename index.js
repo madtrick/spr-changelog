@@ -11,7 +11,6 @@ var CHANGELOG_NAMES = ['CHANGELOG', 'CHANGELOG.md'];
 module.exports = {
   preMessageHook : function () {
     return new Promise( function(resolve) {
-      var changelogSummary;
 
       var changelogPath = find(
         CHANGELOG_NAMES.map( function (name) {
@@ -26,28 +25,23 @@ module.exports = {
         keepachangelog.read(changelogPath)
         .then( function (changelog) {
 
-          var changedAsMDList,
-              additionsAsMDList,
-              removalsAsMDList,
-              upcoming;
+          var upcoming,
+              changelogSummary;
 
           upcoming = changelog.releases.filter( function (release) {
             return release.version === 'upcoming';
           })[0];
 
-          changedAsMDList   = markdownListify(upcoming.Changed);
-          additionsAsMDList = markdownListify(upcoming.Added);
-          removalsAsMDList  = markdownListify(upcoming.Removed);
+          changelogSummary = ['Summary on changes included in this pull request'];
+          changelogSummary = ['Changed', 'Added', 'Removed'].reduce( function (summary, group) {
+            if (upcoming[group]) {
+              return summary.concat(buildChangesGroup(group, upcoming[group]));
+            } else {
+              return summary;
+            }
+          }, changelogSummary);
 
-          changelogSummary = [
-            'Summary on changes included in this pull request',
-            '#### Changed',
-            changedAsMDList,
-            '#### Added',
-            additionsAsMDList,
-            '#### Removed',
-            removalsAsMDList
-          ].join('\n');
+          changelogSummary = changelogSummary.join('\n');
 
           resolve(changelogSummary);
         });
@@ -58,6 +52,18 @@ module.exports = {
     });
   }
 };
+
+function buildChangesGroup(groupName, changes) {
+  return [
+    markdownHeading(groupName),
+    markdownListify(changes)
+  ];
+}
+
+
+function markdownHeading(value) {
+  return '#### ' + value;
+}
 
 function markdownListify(elements) {
   return elements.map( function (el) {
