@@ -9,9 +9,8 @@ var Promise        = require('bluebird');
 var CHANGELOG_NAMES = ['CHANGELOG', 'CHANGELOG.md'];
 
 module.exports = {
-  preMessageHook : function () {
-    return new Promise( function(resolve) {
-
+  preMessageHook : function (message) {
+    return new Promise( function (resolve) {
       var changelogPath = find(
         CHANGELOG_NAMES.map( function (name) {
           return path.join(process.cwd(), name);
@@ -21,12 +20,10 @@ module.exports = {
         }
       );
 
-      if (changelogPath){
+      if (changelogPath) {
         keepachangelog.read(changelogPath)
         .then( function (changelog) {
-
-          var upcoming,
-              changelogSummary;
+          var upcoming, changelogSummary, newMessage;
 
           upcoming = changelog.releases.filter( function (release) {
             return release.version === 'upcoming';
@@ -42,30 +39,29 @@ module.exports = {
           }, changelogSummary);
 
           changelogSummary = changelogSummary.join('\n');
+          newMessage       = [changelogSummary, message].join('\n');
 
-          resolve(changelogSummary);
+          resolve(newMessage);
         });
       } else {
-        resolve('');
+        resolve(message);
       }
-
     });
   }
 };
 
-function buildChangesGroup(groupName, changes) {
+function buildChangesGroup (groupName, changes) {
   return [
     markdownHeading(groupName),
     markdownListify(changes)
   ];
 }
 
-
-function markdownHeading(value) {
+function markdownHeading (value) {
   return '#### ' + value;
 }
 
-function markdownListify(elements) {
+function markdownListify (elements) {
   return elements.map( function (el) {
     var markdownElement = el.map(transformJsonMLIntoMarkdownString).join('');
     return '- ' + markdownElement + '\n';
