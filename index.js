@@ -9,7 +9,7 @@ var Promise        = require('bluebird');
 var CHANGELOG_NAMES = ['CHANGELOG', 'CHANGELOG.md'];
 
 module.exports = {
-  preMessageHook : function (message) {
+  preMessageHook : function (options, message) {
     return new Promise( function (resolve) {
       var changelogPath = find(
         CHANGELOG_NAMES.map( function (name) {
